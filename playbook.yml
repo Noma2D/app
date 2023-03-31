@@ -51,6 +51,37 @@
         path: /app/files/default
         regexp: 'server\ server1:443;'
         replace: 'server "{{ HOST_3 }}":443;'
+    - name: Да
+      ansible.builtin.replace
+        path: /app/files/default
+        regexp: /server\ server1:80;
+        replace: server "{{ HOST_1 }}":80;
+    - name: Изменение файла балансировки
+      ansible.builtin.replace
+        path: /app/files/default
+        regexp: /server\ server2:80;
+        replace: server "{{ HOST_2 }}":80;
+    - name: Изменение файла балансировки
+      ansible.builtin.replace
+        path: /app/files/default
+        regexp: /server\ server3:80;
+        replace: server "{{ HOST_3 }}":80;
+    - name: Изменение файла балансировки
+      ansible.builtin.replace
+        path: /app/files/default
+        regexp: /server\ server1:443;
+        replace: server "{{ HOST_1 }}":443;
+    - name: Изменение файла балансировки
+      ansible.builtin.replace
+        path: /app/files/default
+        regexp: /server\ server2:443;
+        replace: server "{{ HOST_2 }}":443;
+    - name: Изменение файла балансировки
+      ansible.builtin.replace
+        path: /app/files/default
+        regexp: /server\ server1:443;
+        replace: server "{{ HOST_3 }}":443;
+
 
 - name: Установка GlusterFS для обмена данных образами приложения
   hosts: all
