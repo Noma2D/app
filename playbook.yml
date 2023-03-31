@@ -1,23 +1,57 @@
-env_vars:
-  HOST_1: "{{ INSTANCE_1 }}"
-  HOST_2: "{{ INSTANCE_2 }}"
-  HOST_3: "{{ INSTANCE_3 }}"
-  COMPETITOR_ID: "{{ COMPETITOR }}"
-  HOSTN_1: "{{ HOSTNAME_1 }}"
-  HOSTN_2: "{{ HOSTNAME_2 }}"
-  HOSTN_3: "{{ HOSTNAME_3 }}"
 - name: Установка Git
+#  env_vars:
+#    HOST_1: "{{ INSTANCE_1 }}"
+#    HOST_2: "{{ INSTANCE_2 }}"
+#    HOST_3: "{{ INSTANCE_3 }}"
+#    COMPETITOR_ID: "{{ COMPETITOR }}"
+#    HOSTN_1: "{{ HOSTNAME_1 }}"
+#    HOSTN_2: "{{ HOSTNAME_2 }}"
+#    HOSTN_3: "{{ HOSTNAME_3 }}"
   hosts: all
   become: true
   tasks:
     - name: Скачиваем Git
       apt:
-        name: git
+        pkg: 
+          - aptitude
+          - git
         state: latest
+        update-cache: yes
     - name: Копирование приложения
       ansible.builtin.git:
         repo: https://github.com/Noma2D/app
         dest: /app
+    - name: Изменение файла балансировки
+      ansible.builtin.replace:
+        path: /app/files/default
+        regexp: 'server\ server1:80;'
+        replace: 'server "{{ HOST_1 }}":80;'
+    - name: Изменение файла балансировки
+      ansible.builtin.replace:
+        path: /app/files/default
+        regexp: 'server\ server2:80;'
+        replace: 'server "{{ HOST_2 }}":80;'
+    - name: Изменение файла балансировки
+      ansible.builtin.replace:
+        path: /app/files/default
+        regexp: 'server\ server3:80;'
+        replace: 'server "{{ HOST_3 }}":80;'
+    - name: Изменение файла балансировки
+      ansible.builtin.replace:
+        path: /app/files/default
+        regexp: 'server\ server1:443;'
+        replace: 'server "{{ HOST_1 }}":443;'
+    - name: Изменение файла балансировки
+      ansible.builtin.replace:
+        path: /app/files/default
+        regexp: 'server\ server2:443;'
+        replace: 'server "{{ HOST_2 }}":443;'
+    - name: Изменение файла балансировки
+      ansible.builtin.replace:
+        path: /app/files/default
+        regexp: 'server\ server1:443;'
+        replace: 'server "{{ HOST_3 }}":443;'
+
 - name: Установка GlusterFS для обмена данных образами приложения
   hosts: all
   become: true
@@ -25,13 +59,14 @@ env_vars:
   tasks:
   - name: Install Latest Python Package
     apt:
-      name: python
+      pkg: python
       state: latest
   - name: Install Latest GlusterFS Package
     apt:
       state: latest
-      name:
-      - glusterfs
+      pkg:
+      - glusterfs-server
+      - glusterfs-client
       - ncdu
   - name: Add Nodes to /etc/hosts File
     blockinfile:
@@ -52,7 +87,7 @@ env_vars:
     gluster.gluster.gluster_volume:
       state: present
       name: app
-      bricks: /app/files
+      bricks: /app/data
       rebalance: yes
       cluster:
         - "{{ HOST_1 }}"
@@ -68,12 +103,13 @@ env_vars:
   - name: Установка всяких пакетов
     become: yes
     apt:
-      name: "{{ packagesdep }}"
+      pkg: "{{ packagesdep }}"
       force_apt_get: yes
       state: latest
       update_cache: yes
     vars:
       packagesdep:
+      - iptables
       - apt-transport-https
       - ca-certificates
       - wget
@@ -82,8 +118,16 @@ env_vars:
       - curl
   - name: Всё-таки установить Docker
     apt:
-      name: "docker-ce"
+      pkg: "docker-ce"
       state: latest
+  - name: Настройка портов
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: 1234
+      jump: ACCEPT
+      action: insert
+
 
 - name: Создание Docker Swarm 
   hosts: swarm_master
@@ -108,7 +152,7 @@ env_vars:
       community.docker.docker_image:
         name: app:latest
         build: /app
-      state: present
+        state: present
 
 - name: Запуск контейнеров
   hosts: all
@@ -116,9 +160,9 @@ env_vars:
   tasks:
     - name: Создание сети контейнеров
       community.docker.docker_network:
-      name: appnet
-      ipam_config:
-        - subnet: 172.10.10.0/24
+        name: appnet
+        ipam_config:
+          - subnet: 172.10.10.0/24
     - name:
       community.docker.docker_container:
         name: "app"
