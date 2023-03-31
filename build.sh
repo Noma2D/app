@@ -8,13 +8,6 @@ sudo apt install ansible
 sudo sed "s/#\ StrictHostKeyChecking/StrictHostKeyChecking\ No/" /etc/ssh/ssh_config
 sudo sed "s/#\ UserKnownHostsFile/UserKnownHostsFile\ \/dev\/null/" /etc/ssh/ssh_config
 
-sudo sed "s/server\ server1:80;/server\ $INSTANCE_1:80;/" /app/default
-sudo sed "s/server\ server2:80;/server\ $INSTANCE_2:80;/" /app/default
-sudo sed "s/server\ server3:80;/server\ $INSTANCE_3:80;/" /app/default
-sudo sed "s/server\ server1:443;/server\ $INSTANCE_1:443;/" /app/default
-sudo sed "s/server\ server2:443;/server\ $INSTANCE_2:443;/" /app/default
-sudo sed "s/server\ server3:443;/server\ $INSTANCE_3:443;/" /app/default
-
 sudo cp /etc/hosts hosts
 
 echo "$INSTANCE_1 $HOSTNAME_1
