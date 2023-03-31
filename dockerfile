@@ -10,7 +10,6 @@ COPY files/snakeoil.conf /etc/nginx/snippets/snakeoil.conf
 COPY files/app.pem /etc/ssl/private/app.pem
 COPY files/app.key /etc/ssl/private/app.key
 
-
 COPY . /app/.
 
 RUN pip install --no-cache-dir -r /app/requirements.txt
